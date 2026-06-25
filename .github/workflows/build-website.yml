@@ -2,7 +2,7 @@ name: Build Website
 
 on:
   pull_request:
-    branches: [staged]
+    branches: [main]
     paths:
       - website
       - agents
@@ -11,6 +11,9 @@ on:
       - instructions
       - hooks
       - workflows
+
+permissions:
+  contents: read
 
 jobs:
   build:
