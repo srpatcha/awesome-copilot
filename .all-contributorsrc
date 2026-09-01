@@ -12,7 +12,7 @@
   "commit": false,
   "commitConvention": "none",
   "contributorsPerLine": 7,
-  "linkToUsage": true,
+  "linkToUsage": false,
   "commitType": "docs",
   "types": {
     "instructions": {
@@ -3577,6 +3577,43 @@
       "profile": "https://surenk.com",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "passadis",
+      "name": "Konstantinos Passadis | Azure MVP | MCT",
+      "avatar_url": "https://avatars.githubusercontent.com/u/53148138?v=4",
+      "profile": "https://www.cloudblogger.eu",
+      "contributions": [
+        "doc",
+        "content"
+      ]
+    },
+    {
+      "login": "alx-so",
+      "name": "Alex Sokol",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8975621?v=4",
+      "profile": "https://github.com/alx-so",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "jmatsuzawa",
+      "name": "Jiro Matsuzawa",
+      "avatar_url": "https://avatars.githubusercontent.com/u/545426?v=4",
+      "profile": "http://blogs.gnome.org/jmatsuzawa/",
+      "contributions": [
+        "tool"
+      ]
+    },
+    {
+      "login": "GuoCheng24",
+      "name": "Guo Cheng",
+      "avatar_url": "https://avatars.githubusercontent.com/u/224264187?v=4",
+      "profile": "https://github.com/GuoCheng24",
+      "contributions": [
+        "content"
       ]
     }
   ]

@@ -26,6 +26,10 @@ import {
   parseYamlFile,
 } from "./yaml-parser.mjs";
 import { readExternalPlugins } from "./external-plugin-validation.mjs";
+import {
+  readExtensionPluginOwners,
+  resolveExtensionPluginName,
+} from "./extension-plugin-ownership.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -587,37 +591,26 @@ function generatePluginsData(gitDates, resourceIndex = {}) {
         ];
       });
 
-      // Parse mcpServers: supports a path to a .mcp.json file or an inline object
+      // Discover MCP servers from the spec-mandated mcp.json at the plugin root.
       const mcpItems = [];
-      if (composition.mcpServers) {
-        let mcpServersObj = null;
-        let mcpConfigPath = relPath;
-        if (typeof composition.mcpServers === "string") {
-          const manifestMcpPath = composition.mcpServers.replace(/^\.\//, "");
-          mcpConfigPath = manifestMcpPath ? `${relPath}/${manifestMcpPath}` : relPath;
-          const mcpJsonPath = path.join(pluginDir, manifestMcpPath);
-          if (fs.existsSync(mcpJsonPath)) {
-            try {
-              const mcpJson = JSON.parse(fs.readFileSync(mcpJsonPath, "utf-8"));
-              mcpServersObj = mcpJson.mcpServers || mcpJson;
-            } catch {
-              // ignore parse errors
+      const mcpJsonPath = path.join(pluginDir, "mcp.json");
+      if (fs.existsSync(mcpJsonPath) && fs.statSync(mcpJsonPath).isFile()) {
+        try {
+          const mcpJson = JSON.parse(fs.readFileSync(mcpJsonPath, "utf-8"));
+          const mcpServers = mcpJson.mcpServers;
+          if (mcpServers && typeof mcpServers === "object") {
+            for (const serverName of Object.keys(mcpServers)) {
+              mcpItems.push({ kind: "mcp", path: `${relPath}/mcp.json`, title: serverName });
             }
           }
-        } else if (typeof composition.mcpServers === "object") {
-          mcpServersObj = composition.mcpServers;
-        }
-        if (mcpServersObj) {
-          for (const serverName of Object.keys(mcpServersObj)) {
-            mcpItems.push({ kind: "mcp", path: mcpConfigPath, title: serverName });
-          }
+        } catch {
+          // ignore parse errors
         }
       }
 
-      // Build items list from spec fields (agents, commands, skills, mcpServers)
+      // Build items list from supported composition fields.
       const items = [
         ...agentItems,
-        ...(composition.commands || []).map((p) => ({ kind: "prompt", path: p })),
         ...(composition.skills || []).map((p) => ({ kind: "skill", path: p })),
         ...extensionItems,
         ...mcpItems,
@@ -1177,6 +1170,7 @@ function generateCanvasManifest(gitDates, commitSha) {
     return { items: [], filters: { keywords: [] } };
   }
 
+  const extensionPluginOwners = readExtensionPluginOwners(PLUGINS_DIR);
   const extensionDirs = fs
     .readdirSync(EXTENSIONS_DIR, { withFileTypes: true })
     .filter((entry) => {
@@ -1212,6 +1206,7 @@ function generateCanvasManifest(gitDates, commitSha) {
       normalizeText(packageJson.description, "Canvas extension")
     );
     const extensionName = normalizeText(pluginJson.name, normalizeText(packageJson.name, dir.name));
+    const pluginName = resolveExtensionPluginName(dir.name, extensionPluginOwners);
     const extensionVersion = normalizeText(pluginJson.version, normalizeText(packageJson.version, "1.0.0"));
     const readmeFile = fs.existsSync(path.join(extensionDir, "README.md"))
       ? `${relPath}/README.md`
@@ -1230,7 +1225,7 @@ function generateCanvasManifest(gitDates, commitSha) {
       /\\/g,
       "/"
     )}`;
-    const installCommand = `copilot plugin install ${extensionName}@awesome-copilot`;
+    const installCommand = `copilot plugin install ${pluginName}@awesome-copilot`;
 
     for (const canvas of canvasEntries) {
       const canvasId = normalizeText(canvas.id, dir.name);
@@ -1241,7 +1236,7 @@ function generateCanvasManifest(gitDates, commitSha) {
         canvasId,
         extensionId: dir.name,
         extensionName,
-        pluginName: extensionName,
+        pluginName,
         name: canvasName,
         version: extensionVersion,
         readmeFile,
